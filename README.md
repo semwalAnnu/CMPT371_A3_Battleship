@@ -42,25 +42,38 @@ To successfully run this project, you will need:
 
 ## **5\. Step-by-Step Run Guide**
 
-### **Step 1: Start the Server**
-Start a Terminal session and navigate to the root directory of the project. Run the following below. The server binds to 127.0.0.1 on port 5001 by default.
+### **Step 1: Clone the Repository**
+Start a Terminal session. Clone the repository to your local machine using the following command. Then switch to the project directory.
+```
+git clone https://github.com/semwalAnnu/CMPT371_A3_Battleship.git Battleship
+cd Battleship
+```
+
+### **Step 2: Install the required Python libraries**
+Using the same Terminal session, run the following command to install the required libraries:
+```
+pip install -r requirements.txt
+```
+
+### **Step 3: Start the Server**
+Using the same Terminal session, run the following below. The server binds to 127.0.0.1 on port 5001 by default.
 ```
 python src/server.py
 ```
 
-### **Step 2: Connect Player 1**
+### **Step 4: Connect Player 1**
 Start another Terminal session without terminating the server Terminal session and navigate to the root directory of the project. Run the following below. A GUI will appear with the default IP address of 127.0.0.1 and default port of 5001 shown.
 ```
 python src/client.py
 ```
 
-### **Step 3: Connect Player 2**
+### **Step 5: Connect Player 2**
 Start another Terminal session without terminating the server Terminal session and navigate to the root directory of the project. Run the following below. A GUI will appear with the default IP address of 127.0.0.1 and default port of 5001 shown.
 ```
 python src/client.py
 ```
 
-### **Step 4: Gameplay**
+### **Step 6: Gameplay**
 
 This project includes a GUI for gameplay. It is best to follow the on screen instructions.
 
