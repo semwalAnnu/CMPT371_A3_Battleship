@@ -28,7 +28,7 @@ This project is a multiplayer Battleship game implemented via TCP sockets using 
 
 
 ## **3\. Video Demo**
-A quick demonstration visit shows how the two clients connect to the server and plays the game. It can be found on [SFU OneDrive here](https://1sfu-my.sharepoint.com/:v:/g/personal/ezy_sfu_ca/IQBB5vtmb5aZR5f1tTKHNN5RAcLD0RQhHTFzTfCg7R5wC8w?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=qpFaZg).
+A quick demonstration video has been created specifically for CMPT 371 Assignment 3. It shows how the two clients connect to the server and plays the game. The video can be found on [SFU OneDrive here](https://1sfu-my.sharepoint.com/:v:/g/personal/ezy_sfu_ca/IQBB5vtmb5aZR5f1tTKHNN5RAcLD0RQhHTFzTfCg7R5wC8w?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=qpFaZg).
 
 ## **4\. Prerequisites (Fresh Environment)**
 
@@ -49,8 +49,13 @@ git clone https://github.com/semwalAnnu/CMPT371_A3_Battleship.git Battleship
 cd Battleship
 ```
 
-### **Step 2: Install the required Python libraries**
-Using the same Terminal session, run the following command to install the required libraries:
+### **Step 2: Create a virtual environment and install the required Python libraries**
+Using the same Terminal session, run the following command to create a virtual environment and activate it:
+```
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+Then, run the following command to install the required libraries:
 ```
 pip install -r requirements.txt
 ```
