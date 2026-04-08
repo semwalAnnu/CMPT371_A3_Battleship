@@ -8,6 +8,9 @@ MSG_FIRE          = "FIRE"            # client fires a shot at a coordinate
 MSG_RESULT        = "RESULT"          # server tells clients if shot was hit or miss
 MSG_OPPONENT_MOVE = "OPPONENT_MOVE"   # server tells client what move the opponent just made
 MSG_GAME_OVER     = "GAME_OVER"       # server tells clients who won
+MSG_CONNECT       = "CONNECT"         # client connects to server
+MSG_RESUME        = "RESUME"          # client wants to resume a previous game
+MSG_NEW_GAME      = "NEW_GAME"        # client asks to start a new game
 
 
 # this function makes a JSON string from a message type and any extra data

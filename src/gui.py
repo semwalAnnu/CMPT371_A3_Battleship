@@ -96,6 +96,9 @@ class BattleshipGUI:
         self.on_connect      = None
         self.on_ships_placed = None
         self.on_fire         = None
+        self.on_new_game     = None
+
+        self._game_over_overlay = None
 
         self._current = None
         self._screens = {}
@@ -660,7 +663,7 @@ class BattleshipGUI:
             return
         _, length = SHIPS[self.ship_idx]
         cells = self._ship_cells(row, col, length)
-        if not self._can_place(cells):
+        if cells is None or not self._can_place(cells):
             return
 
         # commit ship to board
@@ -852,13 +855,54 @@ class BattleshipGUI:
             self.turn_lbl.config(text="ENEMY\nTURN", fg=TEXT_DIM)
             self.status_lbl.config(text="  Waiting for opponent to fire...", fg=TEXT_DIM)
 
+    # reset UI/game state so players can place ships for a new game
+    def reset_for_new_game(self):
+        if self._game_over_overlay is not None:
+            self._game_over_overlay.destroy()
+            self._game_over_overlay = None
+
+        self.my_board     = [[EMPTY] * BOARD_SIZE for _ in range(BOARD_SIZE)]
+        self.enemy_board  = [[EMPTY] * BOARD_SIZE for _ in range(BOARD_SIZE)]
+        self.is_my_turn   = False
+        self.game_active  = False
+        self.placing      = True
+        self.ship_idx     = 0
+        self.orientation  = "H"
+        self.preview      = []
+        self.placed_ships = []
+        self.hit_count    = 0
+        self.miss_count   = 0
+
+        self.hits_lbl.config(text="0")
+        self.misses_lbl.config(text="0")
+        self.feedback_lbl.config(text="", fg=TEXT)
+        self.turn_lbl.config(text="", fg=ACCENT)
+        self.status_lbl.config(text="", fg=TEXT_DIM)
+
+        name, length = SHIPS[0]
+        self.placing_lbl.config(text=f"Placing: {name} ({length})")
+        self.orient_lbl.config(text="[R] Rotate  ·  HORIZONTAL")
+
+        for idx, (sq_lbl, nm_lbl) in enumerate(self.fleet_rows):
+            sq_lbl.config(fg=ACCENT_DIM)
+            nm_lbl.config(fg=TEXT_BRIGHT if idx == 0 else TEXT_DIM)
+
+        self._redraw(self.place_canvas, self.place_cells, self.my_board, show_ships=True)
+        self._redraw(self.my_canvas, self.my_cells, self.my_board, show_ships=True)
+        self._redraw(self.enemy_canvas, self.enemy_cells, self.enemy_board, show_ships=False)
+        self._show("placement")
+
     # game over overlay with stats
     def show_game_over(self, won):
         self.game_active = False
         self.is_my_turn  = False
         self._cancel_animations()
 
+        if self._game_over_overlay is not None:
+            self._game_over_overlay.destroy()
+
         overlay = tk.Frame(self.root, bg=BG)
+        self._game_over_overlay = overlay
         overlay.place(relx=0, rely=0, relwidth=1, relheight=1)
 
         card = tk.Frame(overlay, bg=PANEL, padx=60, pady=44)
@@ -881,6 +925,11 @@ class BattleshipGUI:
         acc = int(self.hit_count / max(1, total) * 100)
         tk.Label(card, text=f"Shots: {total}   Hits: {self.hit_count}   Accuracy: {acc}%",
                  font=("Courier", 10), fg=TEXT_DIM, bg=PANEL).pack(pady=(0, 22))
+
+        new_game = tk.Label(card, text="NEW GAME", font=("Courier", 12, "bold"),
+                    fg=BG, bg=ACCENT, padx=24, pady=10, cursor="hand2")
+        new_game.pack(pady=(0, 10))
+        new_game.bind("<Button-1>", lambda e: self.on_new_game and self.on_new_game())
 
         close = tk.Label(card, text="CLOSE", font=("Courier", 12, "bold"),
                          fg=BG, bg=color, padx=24, pady=10, cursor="hand2")
