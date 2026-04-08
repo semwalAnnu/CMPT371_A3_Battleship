@@ -283,7 +283,7 @@ class BattleshipGUI:
         self._make_field(card, "HOST IP ADDRESS", self.ip_var, width=22)
 
         # Port field
-        self.port_var = tk.StringVar(value="5000")
+        self.port_var = tk.StringVar(value="5001")
         self._make_field(card, "PORT", self.port_var, width=22, top_pad=18)
 
         # CONNECT button

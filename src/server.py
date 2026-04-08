@@ -20,7 +20,7 @@ from protocol import (
 )
 
 HOST = "127.0.0.1"
-PORT = 5000
+PORT = 5001
 RESUME_TIMEOUT_SECONDS = 5 * 60
 
 waiting_queue = []
@@ -181,10 +181,13 @@ def handle_fire(game, player_num, message):
 
     if won:
         game["phase"] = "finished"
-    else:
+    elif result == "miss":
+        # only switch turns on a miss — a hit lets the same player fire again
         game["turn"] = opponent
 
-    send_to_player(game, player_num, MSG_RESULT, row=row, col=col, result=result)
+    # tell the shooter the result, and whether they get to fire again
+    keep_turn = result == "hit" and not won
+    send_to_player(game, player_num, MSG_RESULT, row=row, col=col, result=result, your_turn=keep_turn)
     send_to_player(game, opponent, MSG_OPPONENT_MOVE, row=row, col=col, result=result)
 
     if won:

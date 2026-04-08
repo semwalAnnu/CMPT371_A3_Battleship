@@ -23,7 +23,7 @@ def place_ships(board, ships):
         board[x][y] = SHIP
 
 
-# processes a shot at (x, y) on the given board
+# process a shot at x, y on the board
 # returns hit if a ship was there  and miss if it wasnt
 def process_shot(board, x, y):
     if board[x][y] == SHIP:

@@ -154,11 +154,16 @@ class BattleshipClient:
 
         if msg_type == MSG_RESULT:
             self.gui.update_enemy_board(message.get("row"), message.get("col"), message.get("result"))
+            # if it was a hit (and game not over), the server keeps our turn so re-enable firing
+            if message.get("your_turn"):
+                self.gui.set_turn(True)
             return
 
         if msg_type == MSG_OPPONENT_MOVE:
             self.gui.update_my_board(message.get("row"), message.get("col"), message.get("result"))
-            self.gui.set_turn(True)
+            # opponent missed, so now it's our turn — a hit means they keep firing
+            if message.get("result") == "miss":
+                self.gui.set_turn(True)
             return
 
         if msg_type == MSG_GAME_OVER:
