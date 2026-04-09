@@ -10,8 +10,11 @@
 | Edmond Yoong | edmond_yoong@sfu.ca  |
 | Shobhit Semwal | annu_semwal@sfu.ca |
 
-## **1\. Project Overview & Description**
-This project is a multiplayer Battleship game implemented via TCP sockets using Python's Socket API. A server listens for incoming client connections. Once two connections are accepted by the server, the server pairs the two clients up and starts a Battleship game.
+
+## **1. Project Overview & Description**
+This project is a multiplayer Battleship game built on a client-server setup using TCP sockets and Python's Socket API. A central server listens for incoming client connections and pairs the first two clients it gets into a shared game. From there it sits in the middle and handles all gameplay between the two players. Any extra clients that show up get queued and paired into their own games as they arrive.
+
+We went with TCP over UDP because Battleship is turn-based and there's really no room for lost or reordered messages. If a FIRE or RESULT got dropped, the two players' boards would fall out of sync, and an out of order move could let someone skip a turn. TCP gives us reliable, in-order delivery for free at the transport layer, and the small latency hit doesn't really matter at the speed humans actually play.
 
 ## **2\. System Limitations & Edge Cases**
 * Handling Multiple Clients Concurrently:
@@ -25,7 +28,9 @@ This project is a multiplayer Battleship game implemented via TCP sockets using 
     * Limitation: If the client process unexpectedly closes, they will not be able to reconnect to the existing game because the game's UUID is stored in-memory.
 * Server Crashes:
     * Limitations: If the server crashes, all ongoing games will be lost and clients will need to reconnect and start new games. All game states are stored in-memory on the server, so they will be lost if the server process is terminated.
-
+* High Latency & Network Conditions:
+    * Solution: TCP handles packet loss and retransmission at the transport layer, so we don't need to deal with dropped messages in the app logic during normal play.
+    * Limitation: The protocol doesn't have any app-level timeouts on FIRE/RESULT round trips. If the network stalls mid move, the client will just look frozen until TCP itself eventually gives up. We're also assuming both players are on a low latency network as we tested on localhost and SFU CSIL.
 
 ## **3\. Video Demo**
 A quick demonstration video has been created specifically for CMPT 371 Assignment 3. It shows how the two clients connect to the server and plays the game. The video can be found on [SFU OneDrive here](https://1sfu-my.sharepoint.com/:v:/g/personal/ezy_sfu_ca/IQBB5vtmb5aZR5f1tTKHNN5RAcLD0RQhHTFzTfCg7R5wC8w?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=qpFaZg).
@@ -127,13 +132,18 @@ A simple protocol was designed, inspired on the sample repository. This can be f
     Where `#` = 1 or 2 to indicate the winning player.
     * For a rematch, each client may send `{"type": "NEW_GAME"}` after `GAME_OVER`. The server starts a new round only after both players request it, and then sends `{"type": "NEW_GAME", "game_uuid": uuid}` to both clients.
 
+* Connection Termination:
+    * Normal termination: After `GAME_OVER`, if either player decides not to do a rematch, the client closes its socket and exits. The server picks up on the closed socket the next time it calls `recv()` (which returns empty) and then cleans up that player's slot in the game.
+    * Mid-game disconnect: If a client closes unexpectedly during placement or battle, the server marks that player as disconnected and kicks off a 5 minute resume window (see Section 2). If the original client manages to reconnect within that window using a `RESUME` message, the game picks up from where it left off. Otherwise the remaining player gets a `GAME_OVER` with `reason: "opponent_timeout"` and the game gets removed from server memory.
+    * Server shutdown: The server catches `KeyboardInterrupt` (Ctrl+C) and closes its listening socket so no new connections come in. Active client sockets don't get explicitly notified though, they'll just see their next `recv()` fail and treat it as a disconnect. This is a known limitation, a graceful shutdown broadcast is something we'd add in a future revision.
+
 ## **7\. Academic Integrity & References**
 
 * **Code Origin:**
     * A portion of the code and this README layout was adopted from the provided sample [repository](https://github.com/mariam-bebawy/CMPT371_A3_Socket_Programming/) along with the provided demo videos for this assignment. The core protocol, socket programming, and game design were written by the group. Although the README shares a similar structure to the sample repository, the content is original and written by the group, specifically for this project.
 
 * **GenAI Usage:**
-    * GitHub Copilot assisted with creation of the GUI suitable for the Battleship game.
+    * Claude Code assisted with creation of the GUI suitable for the Battleship game.
 
 * **References:**  
     * [CMPT371 Assignment 3 - Sample repository](https://github.com/mariam-bebawy/CMPT371_A3_Socket_Programming/)
