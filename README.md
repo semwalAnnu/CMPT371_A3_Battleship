@@ -48,14 +48,16 @@ To successfully run this project, you will need:
 ## **5\. Step-by-Step Run Guide**
 
 ### **Step 1: Clone the Repository**
-Start a Terminal session. Clone the repository to your local machine using the following command. Then switch to the project directory.
+Start a Terminal/Command Prompt session. Clone the repository to your local machine using the following command. Then switch to the project directory.
 ```
 git clone https://github.com/semwalAnnu/CMPT371_A3_Battleship.git Battleship
 cd Battleship
 ```
 
+Alternatively, you can [download the repository as a ZIP file](https://github.com/semwalAnnu/CMPT371_A3_Battleship/archive/refs/heads/main.zip) and extract it to your desired location. Then, navigate to the project directory in your Terminal/Command Prompt session.
+
 ### **Step 2: Create a virtual environment and install the required Python libraries**
-Using the same Terminal session, run the following command to create a virtual environment and activate it:
+Using the same Terminal/Command Prompt session, run the following command to create a virtual environment and activate it:
 ```
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -66,19 +68,19 @@ pip install -r requirements.txt
 ```
 
 ### **Step 3: Start the Server**
-Using the same Terminal session, run the following below. The server binds to 127.0.0.1 on port 5001 by default.
+Using the same Terminal/Command Prompt session, run the following below. The server binds to 127.0.0.1 on port 5001 by default.
 ```
 python src/server.py
 ```
 
 ### **Step 4: Connect Player 1**
-Start another Terminal session without terminating the server Terminal session and navigate to the root directory of the project. Run the following below. A GUI will appear with the default IP address of 127.0.0.1 and default port of 5001 shown.
+Start another Terminal/Command Prompt session without terminating the server Terminal/Command Prompt session and navigate to the root directory of the project. Run the following below. A GUI will appear with the default IP address of 127.0.0.1 and default port of 5001 shown.
 ```
 python src/client.py
 ```
 
 ### **Step 5: Connect Player 2**
-Start another Terminal session without terminating the server Terminal session and navigate to the root directory of the project. Run the following below. A GUI will appear with the default IP address of 127.0.0.1 and default port of 5001 shown.
+Start another Terminal/Command Prompt session without terminating the server Terminal/Command Prompt session and navigate to the root directory of the project. Run the following below. A GUI will appear with the default IP address of 127.0.0.1 and default port of 5001 shown.
 ```
 python src/client.py
 ```
@@ -146,6 +148,6 @@ A simple protocol was designed, inspired on the sample repository. This can be f
     * Claude Code assisted with creation of the GUI suitable for the Battleship game.
 
 * **References:**  
+    * [CMPT371 Assignment 3 - TA guided tutorial videos](https://www.youtube.com/playlist?list=PL-8C2cUhmkO1yWLTCiqf4mFXId73phvdx&si=FIq3OxypbBeWHhYm)
     * [CMPT371 Assignment 3 - Sample repository](https://github.com/mariam-bebawy/CMPT371_A3_Socket_Programming/)
     * [Python Socket Programming HOWTO](https://docs.python.org/3/howto/sockets.html)
-    * [CMPT371 Assignment 3 - TA guided tutorial videos](https://www.youtube.com/playlist?list=PL-8C2cUhmkO1yWLTCiqf4mFXId73phvdx&si=FIq3OxypbBeWHhYm)

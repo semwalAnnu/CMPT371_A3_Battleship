@@ -3,7 +3,15 @@ import threading
 import time
 import uuid
 
-from game_logic import BOARD_SIZE, HIT, MISS, all_ships_sunk, create_board, place_ships, process_shot
+from game_logic import (
+    BOARD_SIZE,
+    HIT,
+    MISS,
+    all_ships_sunk,
+    create_board,
+    place_ships,
+    process_shot,
+)
 from protocol import (
     MSG_CONNECT,
     MSG_FIRE,
@@ -19,6 +27,7 @@ from protocol import (
     parse_message,
 )
 
+# Port 5001 was selected instead of port 5000 initially. While testing, it appears that this port was commonly already used by another process on our group's devices and therefore would fail to bind.
 HOST = "127.0.0.1"
 PORT = 5001
 RESUME_TIMEOUT_SECONDS = 5 * 60
@@ -27,6 +36,7 @@ waiting_queue = []
 games = {}
 
 
+# Handles sending messages into the socket connection between the server and client. Sends messages according to the protocol defined in protocol.py and its make_message function. Adds a newline character ("\n") at the end of each message to indicate the end of a message.
 def send_message(sock, msg_type, **kwargs):
     if sock is None:
         return False
@@ -37,6 +47,7 @@ def send_message(sock, msg_type, **kwargs):
         return False
 
 
+# Handles closing the socket connection between the server and client.
 def close_socket(sock):
     try:
         if sock is not None:
@@ -45,18 +56,27 @@ def close_socket(sock):
         pass
 
 
+# Helper function to determine the other player's number. If player 1 is passed into this function, it will return player 2. Likewise, if player 2 is passed into this function, it will return player 1.
 def other_player(player_num):
     return 2 if player_num == 1 else 1
 
 
+# Determine if the board coordinates passed are valid. Accepts a row and column integer.
 def valid_coord(row, col):
-    return isinstance(row, int) and isinstance(col, int) and 0 <= row < BOARD_SIZE and 0 <= col < BOARD_SIZE
+    return (
+        isinstance(row, int)
+        and isinstance(col, int)
+        and 0 <= row < BOARD_SIZE
+        and 0 <= col < BOARD_SIZE
+    )
 
 
+# Helper function to faciliate sending messages to a player in a game. Uses send_message(), as defined above, which will send messages according to the protocol defined in protocol.py.
 def send_to_player(game, target_player, msg_type, **kwargs):
     send_message(game["players"][target_player]["sock"], msg_type, **kwargs)
 
 
+# Clean up a game and close the client sockets.
 def cleanup_game(game_uuid):
     game = games.pop(game_uuid, None)
     if game is None:
@@ -67,6 +87,7 @@ def cleanup_game(game_uuid):
         close_socket(sock)
 
 
+# Set up the initial game state for a new player.
 def new_player_state(sock):
     return {
         "sock": sock,
@@ -77,6 +98,7 @@ def new_player_state(sock):
     }
 
 
+# Reset the game state for a new game.
 def reset_for_new_game(game):
     game["phase"] = "placement"
     game["turn"] = 1
@@ -86,6 +108,7 @@ def reset_for_new_game(game):
         game["players"][p]["new_game_requested"] = False
 
 
+# Pair two players together into a game and send a message to each player with their player number and game UUID.
 def start_game_pair(p1_sock, p2_sock):
     game_uuid = str(uuid.uuid4())
     game = {
@@ -106,6 +129,7 @@ def start_game_pair(p1_sock, p2_sock):
     threading.Thread(target=handle_player, args=(game_uuid, 2, p2_sock)).start()
 
 
+# When a player unexpectedly disconnects, start a timer. If the player does not reconnect within the time limit, the other player will be declared the winner and the game will be cleaned up. If the player does reconnect within the time limit, they will be allowed to resume the game where they left off.
 def expire_resume_window(game_uuid, player_num, disconnected_at):
     time.sleep(RESUME_TIMEOUT_SECONDS)
     game = games.get(game_uuid)
@@ -115,10 +139,13 @@ def expire_resume_window(game_uuid, player_num, disconnected_at):
     if player["sock"] is not None or player["disconnected_at"] != disconnected_at:
         return
     winner = other_player(player_num)
-    send_to_player(game, winner, MSG_GAME_OVER, winner=winner, reason="opponent_timeout")
+    send_to_player(
+        game, winner, MSG_GAME_OVER, winner=winner, reason="opponent_timeout"
+    )
     cleanup_game(game_uuid)
 
 
+# When the server detects that a player has disconnected, mark that player as disconnected and start a timer in a new thread.
 def mark_disconnected(game_uuid, player_num, sock):
     game = games.get(game_uuid)
     if game is None:
@@ -135,9 +162,12 @@ def mark_disconnected(game_uuid, player_num, sock):
     disconnected_at = player["disconnected_at"]
     close_socket(sock)
 
-    threading.Thread(target=expire_resume_window, args=(game_uuid, player_num, disconnected_at)).start()
+    threading.Thread(
+        target=expire_resume_window, args=(game_uuid, player_num, disconnected_at)
+    ).start()
 
 
+# Handles the message sent from the client, indicating where they would like their ships, so the game can begin once both players have placed their ships.
 def handle_place_ships(game, player_num, message):
     ships = message.get("ships")
     if not isinstance(ships, list):
@@ -162,6 +192,7 @@ def handle_place_ships(game, player_num, message):
         send_to_player(game, 2, MSG_GAME_START, your_turn=False, game_uuid=game["id"])
 
 
+# Handles the message sent from the client, indicating where they would like to attack on their opponent's board.
 def handle_fire(game, player_num, message):
     row = message.get("row")
     col = message.get("col")
@@ -187,7 +218,15 @@ def handle_fire(game, player_num, message):
 
     # tell the shooter the result, and whether they get to fire again
     keep_turn = result == "hit" and not won
-    send_to_player(game, player_num, MSG_RESULT, row=row, col=col, result=result, your_turn=keep_turn)
+    send_to_player(
+        game,
+        player_num,
+        MSG_RESULT,
+        row=row,
+        col=col,
+        result=result,
+        your_turn=keep_turn,
+    )
     send_to_player(game, opponent, MSG_OPPONENT_MOVE, row=row, col=col, result=result)
 
     if won:
@@ -195,12 +234,16 @@ def handle_fire(game, player_num, message):
         send_to_player(game, 2, MSG_GAME_OVER, winner=player_num)
 
 
+# If both players finish a game and wants to start a new game, reset the game start and start a new game.
 def handle_new_game(game, player_num):
     if game["phase"] != "finished":
         return
 
     game["players"][player_num]["new_game_requested"] = True
-    if not (game["players"][1]["new_game_requested"] and game["players"][2]["new_game_requested"]):
+    if not (
+        game["players"][1]["new_game_requested"]
+        and game["players"][2]["new_game_requested"]
+    ):
         return
 
     reset_for_new_game(game)
@@ -208,6 +251,7 @@ def handle_new_game(game, player_num):
     send_to_player(game, 2, MSG_NEW_GAME, game_uuid=game["id"])
 
 
+# Process incoming messages from the player and handles them accordingly.
 def process_player_message(game_uuid, player_num, message):
     game = games.get(game_uuid)
     if game is None:
@@ -222,6 +266,7 @@ def process_player_message(game_uuid, player_num, message):
         handle_new_game(game, player_num)
 
 
+# Handles receiving messages from the player for existing connections, for further processing.
 def handle_player(game_uuid, player_num, sock):
     try:
         while True:
@@ -237,6 +282,7 @@ def handle_player(game_uuid, player_num, sock):
         mark_disconnected(game_uuid, player_num, sock)
 
 
+# Handles the message sent when a client wants to resume a previous game. Determines if it is possible to resume the game.
 def handle_resume(sock, message):
     game_uuid = message.get("game_uuid")
     player_num = message.get("player_num")
@@ -275,10 +321,19 @@ def handle_resume(sock, message):
     phase = game["phase"]
     your_turn = phase == "battle" and game["turn"] == player_num
 
-    send_message(sock, MSG_RESUME, ok=True, game_uuid=game_uuid, player_num=player_num, phase=phase, your_turn=your_turn)
+    send_message(
+        sock,
+        MSG_RESUME,
+        ok=True,
+        game_uuid=game_uuid,
+        player_num=player_num,
+        phase=phase,
+        your_turn=your_turn,
+    )
     threading.Thread(target=handle_player, args=(game_uuid, player_num, sock)).start()
 
 
+# When a player connects to the server, add them to the waiting queue for a new game.
 def handle_connect(sock):
     waiting_queue.append(sock)
     if len(waiting_queue) < 2:
@@ -286,6 +341,7 @@ def handle_connect(sock):
     start_game_pair(waiting_queue.pop(0), waiting_queue.pop(0))
 
 
+# Handles new incoming connections from the player to the server. Determine if the player is attempting to connect for a new game or resume an existing game, and handles it accordingly.
 def handle_incoming_connection(sock, addr):
     try:
         data = sock.recv(4096)
@@ -307,6 +363,7 @@ def handle_incoming_connection(sock, addr):
         close_socket(sock)
 
 
+# Main server loop to accept incoming connections, to be handled in a new thread.
 def handle_server():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((HOST, PORT))
@@ -315,7 +372,9 @@ def handle_server():
     try:
         while True:
             client_socket, addr = server_socket.accept()
-            threading.Thread(target=handle_incoming_connection, args=(client_socket, addr)).start()
+            threading.Thread(
+                target=handle_incoming_connection, args=(client_socket, addr)
+            ).start()
     except KeyboardInterrupt:
         pass
     finally:
